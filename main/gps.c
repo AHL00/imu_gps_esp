@@ -321,16 +321,25 @@ void debug_log_gps_data(const gps_data_t *data)
     {
         ESP_LOGI(TAG, "  Satellites: Invalid");
     }
-    ESP_LOGI(TAG, "-----------------------------------");
 }
 
+static SemaphoreHandle_t gps_mutex = NULL;
 static gps_data_t gps_data;
 
 // Currently returns a whole new copy of the data
 // This isn't ideal, but idk how mutexes in FreeRTOS work yet
 gps_data_t gps_get_data()
 {
-    return gps_data;
+    if (gps_mutex == NULL)
+    {
+        ESP_LOGE(TAG, "GPS mutex not initialized");
+        return new_gps_data_t(); // Return empty data
+    }
+
+    xSemaphoreTake(gps_mutex, portMAX_DELAY);
+    gps_data_t data_copy = gps_data;
+    xSemaphoreGive(gps_mutex);
+    return data_copy;
 }
 
 void gps_task(void *arg)
@@ -385,7 +394,9 @@ void gps_task(void *arg)
                     // Parse the complete NMEA sentence if it's not empty
                     if (line_pos > 0 && line_buffer[0] == '$')
                     {
+                        xSemaphoreTake(gps_mutex, portMAX_DELAY);
                         parse_nmea(line_buffer, &gps_data);
+                        xSemaphoreGive(gps_mutex);
                     }
 
                     // Reset line buffer for next sentence
@@ -398,6 +409,8 @@ void gps_task(void *arg)
                     line_pos = 0;
                 }
             }
+
+            // ESP_LOGI("DEBUG", "Processed %d bytes from UART", len);
         }
         else
         {
@@ -407,8 +420,18 @@ void gps_task(void *arg)
     }
 }
 
-void gps_init()
+void gps_init(int rx_pin, int tx_pin)
 {
+    if (rx_pin >= 0)
+    {
+        GPS_RX_PIN = rx_pin;
+    }
+
+    if (tx_pin >= 0)
+    {
+        GPS_TX_PIN = tx_pin;
+    }
+
     // Initialize UART for GPS
     const uart_config_t uart_config = {
         .baud_rate = GPS_UART_BAUD_RATE,
@@ -423,6 +446,12 @@ void gps_init()
 
     // Initialize gps_data structure
     gps_data = new_gps_data_t();
+    gps_mutex = xSemaphoreCreateMutex();
+    if (gps_mutex == NULL)
+    {
+        ESP_LOGE(TAG, "Failed to create GPS mutex");
+        return;
+    }
 
     // Create GPS task
     xTaskCreate(gps_task, "gps_task", GPS_TASK_STACK_SIZE, NULL, 5, NULL);

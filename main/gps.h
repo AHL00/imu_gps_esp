@@ -4,13 +4,14 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define GPS_RX_PIN 7
-#define GPS_TX_PIN 6
 #define GPS_UART_NUM UART_NUM_1
 #define GPS_UART_BAUD_RATE 9600
 #define GPS_UART_BUFFER_SIZE 1024
 #define GPS_UART_TIMEOUT_MS 1000
 #define GPS_TASK_STACK_SIZE 2048
+
+static int GPS_RX_PIN = 7;
+static int GPS_TX_PIN = 6;
 
 // Data type for parsed GPS data from NMEA sentences
 typedef struct
@@ -58,7 +59,8 @@ typedef struct
 
 // Initializes global static gps_data structure
 // Creates a FreeRTOS task to read and parse GPS data
-void gps_init();
+// Pass -1 to use default pins (7=RX, 6=TX)
+void gps_init(int rx_pin, int tx_pin);
 
 // Only call after gps_init() has been called
 // Currently returns a whole new copy of the data
