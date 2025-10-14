@@ -21,43 +21,54 @@
 
 void debug_log_imu_data(const imu_data_t *imu_data)
 {
-    ESP_LOGI(TAG, "IMU Data:");
-
     if (!imu_data->initialised)
     {
-        ESP_LOGE(TAG, "  IMU not initialized");
         if (imu_data->error_msg)
         {
-            ESP_LOGE(TAG, "  Error: %s", imu_data->error_msg);
+            ESP_LOGE(TAG, "IMU Data:\n  IMU not initialized\n  Error: %s", imu_data->error_msg);
+        }
+        else
+        {
+            ESP_LOGE(TAG, "IMU Data:\n  IMU not initialized");
         }
         return;
     }
 
-    ESP_LOGI(TAG, "  Orientation: Yaw=%.1f°, Roll=%.1f°, Pitch=%.1f°", imu_data->yaw, imu_data->roll, imu_data->pitch);
-
-    ESP_LOGI(TAG, "  Acceleration: X=%.2f m/s², Y=%.2f m/s², Z=%.2f m/s²", imu_data->accel_x, imu_data->accel_y, imu_data->accel_z);
-
-    ESP_LOGI(TAG, "  Gyroscope: X=%.2f dps, Y=%.2f dps, Z=%.2f dps", imu_data->gyro_x, imu_data->gyro_y, imu_data->gyro_z);
-
-    ESP_LOGI(TAG, "  Magnetometer: X=%.2f µT, Y=%.2f µT, Z=%.2f µT", imu_data->mag_x, imu_data->mag_y, imu_data->mag_z);
-
-    ESP_LOGI(TAG, "  Calibration: Sys=%s, Gyro=%s, Accel=%s, Mag=%s",
-             imu_data->sys_calibrated ? "✓" : "×",
-             imu_data->gyro_calibrated ? "✓" : "×",
-             imu_data->accel_calibrated ? "✓" : "×",
-             imu_data->mag_calibrated ? "✓" : "×");
+    char buffer[512];
+    char temp_str[32];
 
     if (imu_data->valid_temperature)
     {
-        ESP_LOGI(TAG, "  Temperature: %.1f °C", imu_data->temperature);
+        snprintf(temp_str, sizeof(temp_str), "%.1f °C", imu_data->temperature);
     }
     else
     {
-        ESP_LOGI(TAG, "  Temperature: Invalid");
+        snprintf(temp_str, sizeof(temp_str), "Invalid");
     }
 
-    ESP_LOGI(TAG, "  System Status Code: 0x%02X", imu_data->sys_stat_code);
-    ESP_LOGI(TAG, "  System Error Code: 0x%02X", imu_data->sys_error_code);
+    snprintf(buffer, sizeof(buffer),
+                "\n"
+             "  Orientation: Yaw=%.1f°, Roll=%.1f°, Pitch=%.1f°\n"
+             "  Acceleration: X=%.2f m/s², Y=%.2f m/s², Z=%.2f m/s²\n"
+             "  Gyroscope: X=%.2f dps, Y=%.2f dps, Z=%.2f dps\n"
+             "  Magnetometer: X=%.2f µT, Y=%.2f µT, Z=%.2f µT\n"
+             "  Calibration: Sys=%s, Gyro=%s, Accel=%s, Mag=%s\n"
+             "  Temperature: %s\n"
+             "  System Status Code: 0x%02X\n"
+             "  System Error Code: 0x%02X",
+             imu_data->yaw, imu_data->roll, imu_data->pitch,
+             imu_data->accel_x, imu_data->accel_y, imu_data->accel_z,
+             imu_data->gyro_x, imu_data->gyro_y, imu_data->gyro_z,
+             imu_data->mag_x, imu_data->mag_y, imu_data->mag_z,
+             imu_data->sys_calibrated ? "✓" : "×",
+             imu_data->gyro_calibrated ? "✓" : "×",
+             imu_data->accel_calibrated ? "✓" : "×",
+             imu_data->mag_calibrated ? "✓" : "×",
+             temp_str,
+             imu_data->sys_stat_code,
+             imu_data->sys_error_code);
+
+    ESP_LOGI(TAG, "%s", buffer);
 }
 
 imu_data_t new_imu_data_t()

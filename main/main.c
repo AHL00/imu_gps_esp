@@ -55,7 +55,7 @@ void app_main(void)
         // Clear screen from cursor down
         printf("\033[J");
 
-        printf("=== Sensor Monitor ===\n");
+        ESP_LOGI("MAIN", "Sensor Monitor");
 
         gps_data_t data = gps_get_data();
         debug_log_gps_data(&data);

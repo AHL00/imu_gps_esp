@@ -260,67 +260,88 @@ void parse_nmea(const char *sentence, gps_data_t *data)
 
 void debug_log_gps_data(const gps_data_t *data)
 {
-    ESP_LOGI(TAG, "GPS Data:");
+    char buffer[512];
+    int pos = 0;
+
+    pos += snprintf(buffer + pos, sizeof(buffer) - pos, "\n");
+
+    // Time
     if (data->valid_time)
     {
-        ESP_LOGI(TAG, "  Time: %02d:%02d:%02d.%03d UTC", data->hour, data->minute, data->second, data->millisecond);
+        pos += snprintf(buffer + pos, sizeof(buffer) - pos,
+                        "  Time: %02d:%02d:%02d.%03d UTC\n",
+                        data->hour, data->minute, data->second, data->millisecond);
     }
     else
     {
-        ESP_LOGI(TAG, "  Time: Invalid");
+        pos += snprintf(buffer + pos, sizeof(buffer) - pos, "  Time: Invalid\n");
     }
 
+    // Date
     if (data->valid_date)
     {
-        ESP_LOGI(TAG, "  Date: %02d/%02d/%04d", data->day, data->month, data->year);
+        pos += snprintf(buffer + pos, sizeof(buffer) - pos,
+                        "  Date: %02d/%02d/%04d\n",
+                        data->day, data->month, data->year);
     }
     else
     {
-        ESP_LOGI(TAG, "  Date: Invalid");
+        pos += snprintf(buffer + pos, sizeof(buffer) - pos, "  Date: Invalid\n");
     }
 
+    // Position
     if (data->valid_position)
     {
-        ESP_LOGI(TAG, "  Position: %.6f° %c, %.6f° %c", fabs(data->latitude), data->lat_dir, fabs(data->longitude), data->lon_dir);
+        pos += snprintf(buffer + pos, sizeof(buffer) - pos,
+                        "  Position: %.6f° %c, %.6f° %c\n",
+                        fabs(data->latitude), data->lat_dir,
+                        fabs(data->longitude), data->lon_dir);
     }
     else
     {
-        ESP_LOGI(TAG, "  Position: Invalid");
+        pos += snprintf(buffer + pos, sizeof(buffer) - pos, "  Position: Invalid\n");
     }
 
+    // Altitude
     if (data->valid_altitude)
     {
-        ESP_LOGI(TAG, "  Altitude: %.2f m", data->altitude);
-        ESP_LOGI(TAG, "  Geoid Separation: %.2f m", data->geoid_sep);
+        pos += snprintf(buffer + pos, sizeof(buffer) - pos,
+                        "  Altitude: %.2f m\n  Geoid Separation: %.2f m\n",
+                        data->altitude, data->geoid_sep);
     }
     else
     {
-        ESP_LOGI(TAG, "  Altitude: Invalid");
+        pos += snprintf(buffer + pos, sizeof(buffer) - pos, "  Altitude: Invalid\n");
     }
 
+    // Speed
     if (data->valid_speed)
     {
-        ESP_LOGI(TAG, "  Speed: %.2f km/h (%.2f knots, %.2f m/s)", data->speed_kmh, data->speed_knots, data->speed_mps);
-        ESP_LOGI(TAG, "  Course: %.2f°", data->course);
+        pos += snprintf(buffer + pos, sizeof(buffer) - pos,
+                        "  Speed: %.2f km/h (%.2f knots, %.2f m/s)\n  Course: %.2f°\n",
+                        data->speed_kmh, data->speed_knots, data->speed_mps, data->course);
     }
     else
     {
-        ESP_LOGI(TAG, "  Speed: Invalid");
-        ESP_LOGI(TAG, "  Course: Invalid");
+        pos += snprintf(buffer + pos, sizeof(buffer) - pos,
+                        "  Speed: Invalid\n  Course: Invalid\n");
     }
 
+    // Satellites
     if (data->valid_satellites)
     {
-        ESP_LOGI(TAG, "  Fix Quality: %d", data->fix_quality);
-        ESP_LOGI(TAG, "  Satellites in Use: %d", data->satellites);
-        ESP_LOGI(TAG, "  HDOP: %.2f", data->hdop);
-        ESP_LOGI(TAG, "  VDOP: %.2f", data->vdop);
-        ESP_LOGI(TAG, "  PDOP: %.2f", data->pdop);
+        pos += snprintf(buffer + pos, sizeof(buffer) - pos,
+                        "  Fix Quality: %d\n  Satellites in Use: %d\n"
+                        "  HDOP: %.2f\n  VDOP: %.2f\n  PDOP: %.2f",
+                        data->fix_quality, data->satellites,
+                        data->hdop, data->vdop, data->pdop);
     }
     else
     {
-        ESP_LOGI(TAG, "  Satellites: Invalid");
+        pos += snprintf(buffer + pos, sizeof(buffer) - pos, "  Satellites: Invalid");
     }
+
+    ESP_LOGI(TAG, "%s", buffer);
 }
 
 static SemaphoreHandle_t gps_mutex = NULL;
