@@ -4,9 +4,10 @@
 #include "esp_log.h"
 
 #include "freertos/FreeRTOS.h"
-#include "gps.h"
 #include "i2c_bus.h"
+#include "gps.h"
 #include "imu.h"
+#include "mag_enc.h"
 
 #include "driver/gpio.h"
 
@@ -28,8 +29,9 @@ void app_main(void)
 
     scan_i2c_bus(found_addresses, 128, 1000);
 
-    imu_init();
-    gps_init(7, 6);
+    // imu_init();
+    // gps_init(7, 6);
+    mag_enc_init();
 
     // Initialise built-in LED GPIO
     gpio_set_direction(BUILTIN_LED_GPIO, GPIO_MODE_OUTPUT);
@@ -62,6 +64,9 @@ void app_main(void)
 
         imu_data_t imu_data = imu_get_data();
         debug_log_imu_data(&imu_data);
+
+        mag_enc_data_t mag_enc_data = mag_enc_get_data();
+        debug_log_mag_enc_data(&mag_enc_data);
 
         printf("-------------------------------\n");
 
